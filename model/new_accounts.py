@@ -167,3 +167,16 @@ async def delete_new_account(
         return {"message": "New account deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    
+
+@NewAccountsRouter.put("/new_accounts/{user_id}/approve", response_model=dict)
+async def approve_new_account(
+    user_id: int,
+    approval_status: bool,
+    db=Depends(get_db)
+):
+    query_approval = "UPDATE account_approval SET approved = %s WHERE user_id = %s"
+    db[0].execute(query_approval, (approval_status, user_id))
+    db[1].commit()
+
+    return {"message": f"Account with user ID {user_id} {'approved' if approval_status else 'disapproved'} successfully"}

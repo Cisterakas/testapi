@@ -19,7 +19,7 @@ from model.add_student_user import AddStudentUserRouter
 from model.add_admin_user import AddAdminUserRouter
 from model.payment import PaymentsRouter
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.docs import get_swagger_ui_html    
 
 
 
