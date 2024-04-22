@@ -172,11 +172,33 @@ async def delete_new_account(
 @NewAccountsRouter.put("/new_accounts/{user_id}/approve", response_model=dict)
 async def approve_new_account(
     user_id: int,
-    approval_status: bool,
+    approval_date: date,
+    approved: str = 'TRUE',  # Set the default value to 'TRUE'
     db=Depends(get_db)
 ):
-    query_approval = "UPDATE account_approval SET approved = %s WHERE user_id = %s"
-    db[0].execute(query_approval, (approval_status, user_id))
-    db[1].commit()
+    try:
+        # Check if an approval record already exists for the user
+        query_check_approval = "SELECT approval_id FROM account_approval WHERE user_id = %s"
+        db[0].execute(query_check_approval, (user_id,))
+        existing_approval = db[0].fetchone()
 
-    return {"message": f"Account with user ID {user_id} {'approved' if approval_status else 'disapproved'} successfully"}
+        if existing_approval:
+            # Update the existing approval record
+            query_update_approval = "UPDATE account_approval SET approval_date = %s, approved = %s WHERE user_id = %s"
+            db[0].execute(query_update_approval, (approval_date, approved, user_id))
+            db[1].commit()
+            return {"message": f"Account approval for user ID {user_id} has been updated successfully."}
+        else:
+            # Create a new approval record
+            query_create_approval = "INSERT INTO account_approval (user_id, approval_date, approved) VALUES (%s, %s, %s)"
+            db[0].execute(query_create_approval, (user_id, approval_date, approved))
+
+            # Retrieve the last inserted ID using LAST_INSERT_ID()
+            db[0].execute("SELECT LAST_INSERT_ID()")
+            new_approval_id = db[0].fetchone()[0]
+            db[1].commit()
+
+            return {"message": f"Account for user ID {user_id} has been approved successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+
