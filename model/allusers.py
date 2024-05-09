@@ -4,7 +4,7 @@ import json
 from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from db import get_db
-from websocket import manager
+# from websocket import manager
 
 AllUsersRouter = APIRouter(tags=["All Users"])
 
