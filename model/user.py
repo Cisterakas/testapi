@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, APIRouter, Form
 import bcrypt
-from .db import get_db
+from db import get_db
 
 
 UserRouter = APIRouter(tags=["Users"])
