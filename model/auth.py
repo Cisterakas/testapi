@@ -6,7 +6,7 @@ from db import get_db
 import datetime
 from pydantic import BaseModel
 from jwt import PyJWTError, decode
-from starlette.websockets import WebSocket
+# from starlette.websockets import WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 

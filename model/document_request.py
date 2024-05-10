@@ -160,27 +160,27 @@ async def create_document_request(items: DocumentRequest, token: str = Depends(o
 
 
 
-# @DocumentRequestRouter.patch("/{request_id}/id_link")
-# async def update_document_request_id_link(request_id: int, id_link: str, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
-#     """
-#     Updates the id_link for a specific document request.
-#     """
-#     try:
-#         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         user_id = payload.get("account_id")
+@DocumentRequestRouter.patch("/{request_id}/id_link")
+async def update_document_request_id_link(request_id: int, id_link: str, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+    """
+    Updates the id_link for a specific document request.
+    """
+    try:
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("account_id")
 
-#         query = "SELECT user_id FROM document_request WHERE request_id = %s"
-#         cursor = db[0].cursor()
-#         cursor.execute(query, (request_id,))
-#         existing_request = cursor.fetchone()
+        query = "SELECT user_id FROM document_request WHERE request_id = %s"
+        cursor = db[0].cursor()
+        cursor.execute(query, (request_id,))
+        existing_request = cursor.fetchone()
 
-#         if not existing_request or existing_request[0] != user_id:
-#             raise HTTPException(status_code=404, detail="Document request not found or unauthorized access")
+        if not existing_request or existing_request[0] != user_id:
+            raise HTTPException(status_code=404, detail="Document request not found or unauthorized access")
 
-#         query = "UPDATE document_request SET id_link = %s WHERE request_id = %s"
-#         cursor.execute(query, (id_link, request_id))
-#         db[0].commit()
+        query = "UPDATE document_request SET id_link = %s WHERE request_id = %s"
+        cursor.execute(query, (id_link, request_id))
+        db[0].commit()
 
-#         return {"message": "id_link updated successfully"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+        return {"message": "id_link updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
