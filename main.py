@@ -40,7 +40,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Include CRUD routes from modules
+app.include_router(ClaimingInformationRouter, prefix="/api")
+app.include_router(CourierInformationRouter, prefix="/api")
 app.include_router(AuthRouter, prefix="/api")
 app.include_router(AllUsersRouter, prefix="/api")
 app.include_router(DocumentRequestRouter, prefix="/api")
@@ -58,8 +61,7 @@ app.include_router(DocumentTypeRouter, prefix="/api")
 app.include_router(DocumentItemRouter, prefix="/api")
 app.include_router(DocumentTransactionRouter, prefix="/api")
 app.include_router(AdminApprovalRouter, prefix="/api")
-app.include_router(ClaimingInformationRouter, prefix="/api")
-app.include_router(CourierInformationRouter, prefix="/api")
+
 app.include_router(UserTransactionHistoryRouter, prefix="/api")
 app.include_router(UserFeedbackRouter, prefix="/api")
 

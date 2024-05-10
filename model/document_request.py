@@ -109,7 +109,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
-
 SECRET_KEY = os.getenv("SECRET_KEY")  # Access from environment
 ALGORITHM = os.getenv("ALGORITHM")  # Access from environment
 
@@ -129,8 +128,9 @@ def oauth2_scheme(request: Request):
     token = request.cookies.get("access_token")
     return token
 
+DocumentRequestRouter = APIRouter(tags=["Document Requests"])
 
-@DocumentRequestRouter.post("/document_requests/", response_model=DocumentRequest)  # Adjust response model if needed
+@DocumentRequestRouter.post("/auth/document_requests/", response_model=DocumentRequest)  # Adjust response model if needed
 async def create_document_request(items: DocumentRequest, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     """
     Creates a new document request for the authenticated user.
@@ -159,7 +159,6 @@ async def create_document_request(items: DocumentRequest, token: str = Depends(o
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @DocumentRequestRouter.patch("/{request_id}/id_link")
 async def update_document_request_id_link(request_id: int, id_link: str, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     """
@@ -167,20 +166,20 @@ async def update_document_request_id_link(request_id: int, id_link: str, token: 
     """
     try:
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("account_id")
+        account_id = payload.get("account_id")  # Update variable name to match the one used in create_document_request
 
         query = "SELECT user_id FROM document_request WHERE request_id = %s"
         cursor = db[0].cursor()
         cursor.execute(query, (request_id,))
         existing_request = cursor.fetchone()
 
-        if not existing_request or existing_request[0] != user_id:
+        if not existing_request or existing_request[0] != account_id:  # Update variable name here as well
             raise HTTPException(status_code=404, detail="Document request not found or unauthorized access")
 
         query = "UPDATE document_request SET id_link = %s WHERE request_id = %s"
         cursor.execute(query, (id_link, request_id))
         db[0].commit()
 
-        return {"message": "id_link updated successfully"}
+        return {"message": "id_link updated successfully", "id_link": id_link}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
