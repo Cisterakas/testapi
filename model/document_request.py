@@ -97,6 +97,73 @@
 #     finally:
 #         # Close the database cursor
 #         db[0].close()
+
+
+
+# from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+# from db import get_db
+# import jwt
+# import datetime
+# from pydantic import BaseModel
+# from jwt import PyJWTError, decode
+# from typing import List
+
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()  # Load environment variables from .env file
+
+# SECRET_KEY = os.getenv("SECRET_KEY")  # Access from environment
+# ALGORITHM = os.getenv("ALGORITHM")  # Access from environment
+
+# # Create the DocumentRequestRouter instance
+# DocumentRequestRouter = APIRouter(tags=["Document Requests"])
+
+# # Define your models here
+# class DocumentRequestItem(BaseModel):
+#     document_type_id: int
+#     quantity: int  # Enforce integer quantity
+
+# class DocumentRequest(BaseModel):
+#     items: List[DocumentRequestItem]
+
+
+# def oauth2_scheme(request: Request):
+#     token = request.cookies.get("access_token")
+#     return token
+
+# DocumentRequestRouter = APIRouter(tags=["Document Requests"])
+
+# @DocumentRequestRouter.post("/auth/document_requests/", response_model=DocumentRequest)  # Adjust response model if needed
+# async def create_document_request(items: DocumentRequest, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+#     """
+#     Creates a new document request for the authenticated user.
+#     """
+#     try:
+#         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#         account_id = payload.get("account_id")
+#         print(f"Received request object: {items} from user {account_id}")
+
+#         query = "INSERT INTO document_request (user_id) VALUES (%s)"
+#         cursor = db[0].cursor()
+#         cursor.execute(query, (account_id,))
+#         request_id = cursor.lastrowid
+
+#         for item in items.items:  # Access items using .items attribute
+#             query = "INSERT INTO document_request_item (request_id, document_type_id, quantity) VALUES (%s, %s, %s)"
+#             cursor.execute(query, (request_id, item.document_type_id, item.quantity))
+
+#         db[0].commit()
+#         return {
+#     "message": "Document request created successfully",
+#     "request_id": request_id,
+#     "items": [item.dict() for item in items.items]
+# }
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from db import get_db
 import jwt
@@ -112,10 +179,8 @@ load_dotenv()  # Load environment variables from .env file
 SECRET_KEY = os.getenv("SECRET_KEY")  # Access from environment
 ALGORITHM = os.getenv("ALGORITHM")  # Access from environment
 
-# Create the DocumentRequestRouter instance
 DocumentRequestRouter = APIRouter(tags=["Document Requests"])
 
-# Define your models here
 class DocumentRequestItem(BaseModel):
     document_type_id: int
     quantity: int  # Enforce integer quantity
@@ -123,18 +188,12 @@ class DocumentRequestItem(BaseModel):
 class DocumentRequest(BaseModel):
     items: List[DocumentRequestItem]
 
-
 def oauth2_scheme(request: Request):
     token = request.cookies.get("access_token")
     return token
 
-DocumentRequestRouter = APIRouter(tags=["Document Requests"])
-
-@DocumentRequestRouter.post("/auth/document_requests/", response_model=DocumentRequest)  # Adjust response model if needed
+@DocumentRequestRouter.post("/auth/document_requests/", response_model=DocumentRequest)
 async def create_document_request(items: DocumentRequest, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
-    """
-    Creates a new document request for the authenticated user.
-    """
     try:
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         account_id = payload.get("account_id")
@@ -150,36 +209,11 @@ async def create_document_request(items: DocumentRequest, token: str = Depends(o
             cursor.execute(query, (request_id, item.document_type_id, item.quantity))
 
         db[0].commit()
+        # Return a more structured response with a clear request_id
         return {
-    "message": "Document request created successfully",
-    "request_id": request_id,
-    "items": [item.dict() for item in items.items]
-}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@DocumentRequestRouter.patch("/{request_id}/id_link")
-async def update_document_request_id_link(request_id: int, id_link: str, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
-    """
-    Updates the id_link for a specific document request.
-    """
-    try:
-        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        account_id = payload.get("account_id")  # Update variable name to match the one used in create_document_request
-
-        query = "SELECT user_id FROM document_request WHERE request_id = %s"
-        cursor = db[0].cursor()
-        cursor.execute(query, (request_id,))
-        existing_request = cursor.fetchone()
-
-        if not existing_request or existing_request[0] != account_id:  # Update variable name here as well
-            raise HTTPException(status_code=404, detail="Document request not found or unauthorized access")
-
-        query = "UPDATE document_request SET id_link = %s WHERE request_id = %s"
-        cursor.execute(query, (id_link, request_id))
-        db[0].commit()
-
-        return {"message": "id_link updated successfully", "id_link": id_link}
+            "message": "Document request created successfully",
+            "request_id": request_id,
+            "items": [{"document_type_id": item.document_type_id, "quantity": item.quantity} for item in items.items]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

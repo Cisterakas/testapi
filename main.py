@@ -42,11 +42,12 @@ app.add_middleware(
 
 
 # Include CRUD routes from modules
-app.include_router(ClaimingInformationRouter, prefix="/api")
-app.include_router(CourierInformationRouter, prefix="/api")
 app.include_router(AuthRouter, prefix="/api")
 app.include_router(AllUsersRouter, prefix="/api")
 app.include_router(DocumentRequestRouter, prefix="/api")
+app.include_router(ClaimingInformationRouter, prefix="/api")
+app.include_router(CourierInformationRouter, prefix="/api")
+
 app.include_router(PaymentsRouter, prefix="/api")
 app.include_router(NewAccountsRouter, prefix="/api")
 app.include_router(AddStudentUserRouter, prefix="/api")
