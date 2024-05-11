@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, APIRouter
+from pydantic import BaseModel
 from db import get_db
 
 PaymentsRouter = APIRouter(tags=["Payments"])
@@ -52,3 +53,70 @@ async def read_payments(db=Depends(get_db)):
         db[0].close()
 
 # Other CRUD operations (create, update, delete) can be added as needed
+class UpdateStatus(BaseModel):
+    status: str
+
+class UpdatePaymentDate(BaseModel):
+    payment_date: str
+
+class UpdateClaimingDate(BaseModel):
+    claiming_date: str
+
+class UpdateReceiptLink(BaseModel):
+    receipt_link: str
+
+@PaymentsRouter.put("/payments/update-status/{request_number}")
+async def update_status(request_number: int, update_data: UpdateStatus, db=Depends(get_db)):
+    status = update_data.status
+    try:
+        query = "UPDATE document_request SET status = %s WHERE request_id = %s;"
+        cursor = db[1]
+        cursor.execute(query, (status, request_number))
+        db[0].commit()
+        return {"message": "Status updated successfully."}
+    finally:
+        # Ensure to close the cursor and connection
+        db[1].close()
+        db[0].close()
+
+@PaymentsRouter.put("/payments/update-payment-date/{request_number}")
+async def update_payment_date(request_number: int, update_data: UpdatePaymentDate, db=Depends(get_db)):
+    payment_date = update_data.payment_date
+    try:
+        query = "UPDATE document_transaction SET payment_date = %s WHERE request_id = %s;"
+        cursor = db[1]
+        cursor.execute(query, (payment_date, request_number))
+        db[0].commit()
+        return {"message": "Payment date updated successfully."}
+    finally:
+        # Ensure to close the cursor and connection
+        db[1].close()
+        db[0].close()
+
+@PaymentsRouter.put("/payments/update-claiming-date/{request_number}")
+async def update_claiming_date(request_number: int, update_data: UpdateClaimingDate, db=Depends(get_db)):
+    claiming_date = update_data.claiming_date
+    try:
+        query = "UPDATE claiming_information SET claiming_date = %s WHERE request_id = %s;"
+        cursor = db[1]  
+        cursor.execute(query, (claiming_date, request_number))
+        db[0].commit()
+        return {"message": "Claiming date updated successfully."}
+    finally:
+        # Ensure to close the cursor and connection
+        db[1].close()
+        db[0].close()
+
+@PaymentsRouter.put("/payments/update-receipt-link/{request_number}")
+async def update_receipt_link(request_number: int, update_data: UpdateReceiptLink, db=Depends(get_db)):
+    receipt_link = update_data.receipt_link
+    try:
+        query = "UPDATE user_transaction_history SET receipt_link = %s WHERE request_id = %s;"
+        cursor = db[1]
+        cursor.execute(query, (receipt_link, request_number))
+        db[0].commit()
+        return {"message": "Receipt link updated successfully."}
+    finally:
+        # Ensure to close the cursor and connection
+        db[1].close()
+        db[0].close()

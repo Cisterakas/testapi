@@ -220,37 +220,197 @@
 #         # Close the database cursor
 #         db[1].close()
 #         db[0].close()
+
+
+# from fastapi import APIRouter, Depends, HTTPException, status
+# from db import get_db
+# from pydantic import BaseModel
+
+# # Create the ClaimingInformationRouter instance
+# ClaimingInformationRouter = APIRouter(tags=["Claiming Information"])
+
+# # Define your model here
+# class ClaimingInformation(BaseModel):
+#     request_id: int
+#     mode_of_claiming: str
+
+# # Function to get request details (optional)
+# async def get_request_details(request_id: int, db=Depends(get_db)):
+#     query = "SELECT * FROM document_request WHERE request_id = %s"
+#     cursor = db[0].cursor()
+#     cursor.execute(query, (request_id,))
+#     request = cursor.fetchone()
+#     if not request:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
+#     return request
+
+# # Endpoint to create claiming information
+# @ClaimingInformationRouter.post("/claiming_information/", status_code=status.HTTP_201_CREATED)
+# async def create_claiming_information(claiming_info: ClaimingInformation, db=Depends(get_db)):
+#     """
+#     Creates a new claiming information for a document request.
+#     """
+#     # Optional: Validate request existence (uncomment if needed)
+#     # await get_request_details(claiming_info.request_id, db)
+
+#     query = "INSERT INTO claiming_information (request_id, mode_of_claiming) VALUES (%s, %s)"
+#     cursor = db[0].cursor()
+#     cursor.execute(query, (claiming_info.request_id, claiming_info.mode_of_claiming))
+#     db[0].commit()
+#     return claiming_info
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 from db import get_db
+from pydantic import BaseModel
+from datetime import date
+
+# Claiming Information Router with path parameter
+ClaimingInformationRouter = APIRouter(tags=["Claiming Information"])
 
 # Define your models here
 class ClaimingInformation(BaseModel):
     request_id: int
     mode_of_claiming: str
 
-# Create the ClaimingInformationRouter instance
-ClaimingInformationRouter = APIRouter(tags=["Claiming Information"])
+# Function to get request details (optional)
+async def get_request_details(request_id: int, db=Depends(get_db)):
+    query = "SELECT * FROM document_request WHERE request_id = %s"
+    cursor = db[0].cursor()
+    cursor.execute(query, (request_id,))
+    request = cursor.fetchone()
+    if not request:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
+    return request
 
-@ClaimingInformationRouter.post("/claiming_information")
-async def create_claiming_information(claiming_info: ClaimingInformation, db=Depends(get_db)):
+# Endpoint to create claiming information with path parameter
+@ClaimingInformationRouter.post("/req/claiming_information/{request_id}", status_code=status.HTTP_201_CREATED)
+async def create_claiming_information2(request_id: int, claiming_info: ClaimingInformation, db=Depends(get_db)):
     """
-    Creates a new claiming information entry for a document request.
+    Creates a new claiming information for a document request.
     """
+    # Validate request existence (optional)
+    await get_request_details(request_id, db)
+
+    query = "INSERT INTO claiming_information (request_id, mode_of_claiming) VALUES (%s, %s)"
+    cursor = db[0].cursor()
+    cursor.execute(query, (request_id, claiming_info.mode_of_claiming))
+    db[0].commit()
+    return claiming_info
+
+@ClaimingInformationRouter.get("/claiming_information/", response_model=list)
+async def read_claiming_information(
+    db=Depends(get_db)
+):
     try:
-        # Validate request_id exists (optional)
-        # You can add logic to check if request_id exists in the database
-
-        query = """
-            INSERT INTO claiming_information (request_id, mode_of_claiming)
-            VALUES (%s, %s)
-        """
-        cursor = db.cursor()
-        cursor.execute(query, (claiming_info.request_id, claiming_info.mode_of_claiming))
-        db.commit()
-
-        print(f"Claiming information created successfully for request ID: {claiming_info.request_id}")  # Added console print
-
-        return {"message": "Claiming information created successfully"}
+        query = "SELECT claiming_id, request_id, mode_of_claiming, claiming_date FROM claiming_information"
+        db[1].execute(query)
+        claiming_information = [{
+            "claiming_id": info[0], "request_id": info[1], 
+            "mode_of_claiming": info[2], "claiming_date": info[3]
+        } for info in db[1].fetchall()]
+        return claiming_information
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db[1].close()
+        db[0].close()
+
+@ClaimingInformationRouter.get("/claiming_information/{claiming_id}", response_model=dict)
+async def read_claiming_information_by_id(
+    claiming_id: int, 
+    db=Depends(get_db)
+):
+    try:
+        query = "SELECT claiming_id, request_id, mode_of_claiming, claiming_date FROM claiming_information WHERE claiming_id = %s"
+        db[1].execute(query, (claiming_id,))
+        claiming_info = db[1].fetchone()
+        if claiming_info:
+            return {
+                "claiming_id": claiming_info[0], "request_id": claiming_info[1], 
+                "mode_of_claiming": claiming_info[2], "claiming_date": claiming_info[3]
+            }
+        raise HTTPException(status_code=404, detail="Claiming information not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db[1].close()
+        db[0].close()
+
+@ClaimingInformationRouter.post("/claiming_information/", response_model=dict)
+async def create_claiming_information(
+    request_id: int, 
+    mode_of_claiming: str,
+    claiming_date: date = None,
+    db=Depends(get_db)
+):
+    try:
+        query = "INSERT INTO claiming_information (request_id, mode_of_claiming, claiming_date) VALUES (%s, %s, %s)"
+        db[1].execute(query, (request_id, mode_of_claiming, claiming_date))
+
+        # Retrieve the last inserted ID using LAST_INSERT_ID()
+        db[1].execute("SELECT LAST_INSERT_ID()")
+        new_claiming_id = db[1].fetchone()[0]
+        db[0].commit()
+
+        return {
+            "claiming_id": new_claiming_id, "request_id": request_id, 
+            "mode_of_claiming": mode_of_claiming, "claiming_date": claiming_date
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db[1].close()
+        db[0].close()
+
+@ClaimingInformationRouter.put("/claiming_information/{claiming_id}", response_model=dict)
+async def update_claiming_information(
+    claiming_id: int,
+    request_id: int, 
+    mode_of_claiming: str,
+    claiming_date: date = None,
+    db=Depends(get_db)
+):
+    try:
+        query = "UPDATE claiming_information SET request_id = %s, mode_of_claiming = %s, claiming_date = %s WHERE claiming_id = %s"
+        db[1].execute(query, (request_id, mode_of_claiming, claiming_date, claiming_id))
+
+        # Check if the update was successful
+        if db[1].rowcount > 0:
+            db[0].commit()
+            return {"message": "Claiming information updated successfully"}
+        
+        # If no rows were affected, claiming information not found
+        raise HTTPException(status_code=404, detail="Claiming information not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db[1].close()
+        db[0].close()
+
+@ClaimingInformationRouter.delete("/claiming_information/{claiming_id}", response_model=dict)
+async def delete_claiming_information(
+    claiming_id: int,
+    db=Depends(get_db)
+):
+    try:
+        # Check if the claiming information exists
+        query_check_info = "SELECT claiming_id FROM claiming_information WHERE claiming_id = %s"
+        db[1].execute(query_check_info, (claiming_id,))
+        existing_info = db[1].fetchone()
+
+        if not existing_info:
+            raise HTTPException(status_code=404, detail="Claiming information not found")
+
+        # Delete the claiming information
+        query_delete_info = "DELETE FROM claiming_information WHERE claiming_id = %s"
+        db[1].execute(query_delete_info, (claiming_id,))
+        db[0].commit()
+
+        return {"message": "Claiming information deleted successfully"}
+    except Exception as e:
+        # Handle other exceptions if necessary
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Close the database cursor
+        db[1].close()
+        db[0].close()
