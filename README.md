@@ -67,6 +67,7 @@ uvicorn main:app --reload
 ## Usage
 
 - To access the FastAPI project, open your web browser and navigate to http://localhost:8000.
+- Add "/docs" to open the FastAPI - Swagger UI
 
 ## Additional Notes
 If you have previously opened the project and need to restart the server, follow these steps:
