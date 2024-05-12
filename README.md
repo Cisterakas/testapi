@@ -87,7 +87,7 @@ conda activate your_env_name
 Start the FastAPI server
 
 ```bash
-uvicorn main:app –reload
+uvicorn main:app --reload
 ```
 
 ## Backend Tip
