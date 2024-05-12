@@ -11,6 +11,17 @@ Welcome to the Registrar Document Request Suite! We are your one-stop online sol
 
 ## FastAPI Project Setup
 
+This README outlines the steps to set up and run a FastAPI project along with necessary dependencies.
+
+**Prerequisites**
+
+Before you begin, ensure you have the following installed on your system:
+
+- Anaconda or Miniconda
+- Python 3.9 (optional if already installed via Anaconda)
+
+## Running Tests and Setup Instructions
+
 Clone this repository to your local machine:
 
 ```bash
