@@ -1,57 +1,85 @@
-
-# FRONT END of the ReqEase : Registrar Document Request Suite
+# BACKEND of the ReqEase : Registrar Document Request Suite
 
 Welcome to the Registrar Document Request Suite! We are your one-stop online solution for all your school document needs. Whether you're looking for transcripts, enrollment verification, or any other official records, we've got you covered. 
 
 ## Authors
 
-- Lead @Juvenile Christen Bajo
-- Support Lead @Joshua Cister
+- Lead @Joshua Cister
+- Support Lead @Juvenile Christen Bajo
 - Member @Yukihiro Gamale
 - Member @Christian Jade Plaza
 
-## Running Tests and Setup Instructions
+## FastAPI Project Setup
 
-*Cypress (if not installed)
-If Cypress is not currently installed in your project, you can install it as a dev dependency using npm:
-
-```bash
-npx cypress open
-```
-
-*Frontend Setup
-If you haven't cloned the frontend repository yet, you can do so by copying the repository path and running:
+* Clone this repository to your local machine:
 
 ```bash
-conda activate envname
+git clone <repository_url> 
 ```
 
-*Navigate to the cloned folder:
+* Navigate to the project directory:
 
 ```bash
-cd <folder_name>
+cd <project_directory> 
 ```
 
-*Install dependencies if they are not installed:
+* Create a new Conda environment with Python 3.9:
 
 ```bash
-npm install
+conda create --name your_env_name python=3.9 
 ```
 
-*Running the Frontend
-To run the frontend and open it in your browser locally, execute:
+* Activate the newly created Conda environment:
 
 ```bash
-npm run dev
+conda activate your_env_name 
 ```
 
-*If Cypress has been opened at least once, you can directly open it by navigating to the project folder and running:
+* Install required Python packages:
 
 ```bash
-cd <folder_name>
+pip install fastapi uvicorn mysql-connector-python 
 ```
+
+* (If bcrypt is not already installed, run the following command:)
+
 ```bash
-npx cypress open
+pip install bcrypt 
 ```
 
+* Start the FastAPI server:
 
+```bash
+uvicorn main:app --reload 
+```
+
+## Usage
+
+- To access the FastAPI project, open your web browser and navigate to http://localhost:8000.
+
+## Additional Notes
+If you have previously opened the project and need to restart the server, follow these steps:
+
+* Navigate to the project directory:
+
+```bash
+cd <project_directory>
+```
+
+* Activate the Conda environment:
+
+```bash
+conda activate your_env_name
+```
+
+* Start the FastAPI server:
+
+```bash
+uvicorn main:app –reload
+```
+
+## Backend Tip
+
+Remember to start the backend server if you want to open it in localhost using uvicorn main:app --reload. If you don't want to use localhost, you can deploy it to your preferred hosting service like Vercel.
+
+That's it! You're all set to run tests with FastAPI and work with the backend.
