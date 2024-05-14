@@ -4,7 +4,7 @@ import json
 from typing import List
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from db import get_db
-# from websocket import manager
+
 
 AllUsersRouter = APIRouter(tags=["All Users"])
 
@@ -21,6 +21,7 @@ async def read_users(db=Depends(get_db)):
                 ]
     return accounts
 
+# from websocket import manager
 # @AllUsersRouter.post("/register")
 # async def create_user(
 #     Email: str = Body(...),

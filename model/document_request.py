@@ -195,6 +195,8 @@ def oauth2_scheme(request: Request):
 @DocumentRequestRouter.post("/auth/document_requests/", response_model=DocumentRequest)
 async def create_document_request(items: DocumentRequest, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     try:
+        if token.startswith('b\''):
+          token = token[2:-1]
         payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         account_id = payload.get("account_id")
         print(f"Received request object: {items} from user {account_id}")
