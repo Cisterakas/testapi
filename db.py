@@ -116,6 +116,7 @@
 
 from pathlib import Path
 import os
+from fastapi import HTTPException
 import mysql.connector
 
 

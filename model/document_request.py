@@ -173,8 +173,8 @@ from jwt import PyJWTError, decode
 from typing import List
 
 import os
-from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
+# from dotenv import load_dotenv
+# load_dotenv()  # Load environment variables from .env file
 
 SECRET_KEY = os.getenv("SECRET_KEY")  # Access from environment
 ALGORITHM = os.getenv("ALGORITHM")  # Access from environment
