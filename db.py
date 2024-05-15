@@ -116,8 +116,6 @@
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
-from fastapi import HTTPException
 import mysql.connector
 
 
@@ -127,9 +125,6 @@ def get_db():
     Raises:
         HTTPException: If an error occurs while connecting to the database.
     """
-
-    env_path = Path('.') / '.env'
-    load_dotenv(dotenv_path=env_path)
 
     try:
         db_config = {
@@ -145,3 +140,4 @@ def get_db():
         return db, cursor
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

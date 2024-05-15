@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 import os
-from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
+# from dotenv import load_dotenv
+# load_dotenv()  # Load environment variables from .env file
 
 AuthRouter = APIRouter(tags=["Auth"])
 
