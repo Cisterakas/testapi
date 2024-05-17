@@ -8,6 +8,11 @@ class DocumentType(BaseModel):
     name: str
     fee: float
     unit_name: str
+    
+class DocumentTypeCreate(BaseModel):
+    name: str
+    fee: float
+    unit_name: str
 
 DocumentTypeRouter = APIRouter(tags=["Document Types"])
 
@@ -26,7 +31,7 @@ async def read_document_types(db=Depends(get_db)):
 
 
 @DocumentTypeRouter.post("/document_types/", response_model=DocumentType)
-async def create_document_type(document_type: DocumentType, db=Depends(get_db)):
+async def create_document_type(document_type: DocumentTypeCreate, db=Depends(get_db)):
     try:
         query = "INSERT INTO document_type (name, fee, unit_name) VALUES (%s, %s, %s)"
         cursor = db[1]
@@ -37,8 +42,7 @@ async def create_document_type(document_type: DocumentType, db=Depends(get_db)):
         document_type_id = cursor.fetchone()[0]
         
         db[0].commit()
-        document_type.document_type_id = document_type_id
-        return document_type
+        return DocumentType(document_type_id=document_type_id, **document_type.dict())
     finally:
         db[1].close()
         db[0].close()
