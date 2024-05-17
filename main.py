@@ -4,8 +4,8 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 # from websocket import manager
-
-
+from model.trackdocuments import TrackDocumentsRouter
+from model.getdocuments import GetDocumentRequestsRouter
 # from model.user import UserRouter
 from model.students import StudentRouter
 from model.administrator import AdministratorRouter
@@ -40,7 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+app.include_router(TrackDocumentsRouter, prefix="/api")
+app.include_router(GetDocumentRequestsRouter, prefix="/api")
 # Include CRUD routes from modules
 app.include_router(AuthRouter, prefix="/api")
 app.include_router(AllUsersRouter, prefix="/api")
