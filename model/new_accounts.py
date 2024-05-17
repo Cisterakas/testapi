@@ -1,6 +1,10 @@
 from datetime import date
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import Depends, HTTPException, APIRouter, Body
+from pydantic import BaseModel
 from db import get_db
+class UpdateApprovalStatusRequest(BaseModel):
+    user_id: int
+    approved: str
 
 NewAccountsRouter = APIRouter(tags=["New Accounts"])
 
@@ -25,7 +29,10 @@ async def read_new_accounts(db=Depends(get_db)):
                     WHEN a.role IS NULL THEN 'Student'
                     ELSE a.role
                 END AS role,
-                aa.approved AS account_approval_status
+                aa.approved AS account_approval_status,
+                s.contact,
+                s.address,
+                s.last_school_year
             FROM
                 user u
             LEFT JOIN
@@ -33,15 +40,54 @@ async def read_new_accounts(db=Depends(get_db)):
             LEFT JOIN
                 administrator a ON u.user_id = a.user_id
             LEFT JOIN
-                account_approval aa ON u.user_id = aa.user_id;
+                account_approval aa ON u.user_id = aa.user_id
+            WHERE
+                s.user_id IS NOT NULL;
         """
         cursor = db[1]
         cursor.execute(query)
         new_accounts = [{
             "user_id": row[0], "student_school_id": row[1], "first_name": row[2], "middle_name": row[3], "last_name": row[4], "suffix": row[5],
-            "degree": row[6], "email": row[7], "registration_date": row[8], "role": row[9], "account_approval_status": row[10]
+            "degree": row[6], "email": row[7], "registration_date": row[8], "role": row[9], "account_approval_status": row[10],
+            "contact": row[11], "address": row[12], "last_school_year": row[13]
         } for row in cursor.fetchall()]
         return new_accounts
+    finally:
+        # Ensure to close the cursor and connection
+        db[1].close()
+        db[0].close()
+
+@NewAccountsRouter.get("/admin_accounts/", response_model=list)
+async def read_admin_accounts(db=Depends(get_db)):
+    try:
+        query = """
+            SELECT
+                u.user_id,
+                u.first_name,
+                COALESCE(u.middle_name, '') AS middle_name,
+                u.last_name,
+                COALESCE(u.suffix, '') AS suffix,
+                u.email,
+                u.password,
+                u.registration_date,
+                a.role,
+                aa.approved AS account_approval_status
+            FROM
+                user u
+            LEFT JOIN
+                administrator a ON u.user_id = a.user_id
+            LEFT JOIN
+                account_approval aa ON u.user_id = aa.user_id
+            WHERE
+                a.role IS NOT NULL;
+        """
+        cursor = db[1]
+        cursor.execute(query)
+        admin_accounts = [{
+            "user_id": row[0], "first_name": row[1], "middle_name": row[2], "last_name": row[3], "suffix": row[4],
+            "email": row[5], "password": row[6], "registration_date": row[7], "role": row[8], "account_approval_status": row[9]
+        } for row in cursor.fetchall()]
+        return admin_accounts
     finally:
         # Ensure to close the cursor and connection
         db[1].close()
@@ -225,6 +271,25 @@ async def approve_new_account(
             return {"message": f"Account for user ID {user_id} has been approved successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    finally:
+        # Ensure to close the cursor and connection
+        db[1].close()
+        db[0].close()
+
+@NewAccountsRouter.put("/update_approval_status/")
+async def update_approval_status(request: UpdateApprovalStatusRequest, db=Depends(get_db)):
+    try:
+        query = """
+            UPDATE account_approval
+            SET approved = %s
+            WHERE user_id = %s;
+        """
+        cursor = db[1]
+        cursor.execute(query, (request.approved, request.user_id))
+        db[0].commit()
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"message": "Account approval status updated successfully"}
     finally:
         # Ensure to close the cursor and connection
         db[1].close()

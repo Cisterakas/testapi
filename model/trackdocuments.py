@@ -1,4 +1,6 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from db import get_db
 import jwt
 from jwt import PyJWTError, decode
@@ -9,6 +11,19 @@ ALGORITHM = os.getenv("ALGORITHM")
 
 TrackDocumentsRouter = APIRouter(tags=["Track Documents"])
 
+class UpdateReceiptLinkModel(BaseModel):
+    request_id: int
+    receipt_link: str
+
+class UpdateStatusModel(BaseModel):
+    request_id: int
+    new_status: str
+
+class UpdateFeedbackModel(BaseModel):
+    request_id: int
+    feedback_text: str
+    feedback_rating: int
+    
 def oauth2_scheme(request: Request):
     token = request.cookies.get("access_token")
     print(token)
@@ -143,6 +158,96 @@ async def get_document_requests(token: str = Depends(oauth2_scheme), db=Depends(
         else:
             raise HTTPException(status_code=404, detail="No document requests found for the user")
         
+    except PyJWTError as e:
+        raise HTTPException(status_code=401, detail="Could not validate credentials") from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@TrackDocumentsRouter.put("/auth/update_receipt_link")
+async def update_receipt_link(data: UpdateReceiptLinkModel, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+    try:
+        if token.startswith('b\''):
+            token = token[2:-1]
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        account_id = payload.get("account_id")
+        print(f"Updating receipt link for user {account_id}")
+
+        cursor = db[0].cursor()
+
+        query = """
+        UPDATE user_transaction_history
+        SET receipt_link = %s
+        WHERE request_id = %s AND user_id = %s
+        """
+        cursor.execute(query, (data.receipt_link, data.request_id, account_id))
+        db[0].commit()
+        
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Document request not found or not authorized to update")
+
+        return {"message": "Receipt link updated successfully"}
+
+    except PyJWTError as e:
+        raise HTTPException(status_code=401, detail="Could not validate credentials") from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@TrackDocumentsRouter.put("/auth/update_status")
+async def update_status(data: UpdateStatusModel, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+    try:
+        if token.startswith('b\''):
+            token = token[2:-1]
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        account_id = payload.get("account_id")
+        print(f"Updating status for user {account_id}")
+
+        cursor = db[0].cursor()
+
+        query = """
+        UPDATE document_request
+        SET status = %s
+        WHERE request_id = %s AND user_id = %s
+        """
+        cursor.execute(query, (data.new_status, data.request_id, account_id))
+        db[0].commit()
+        
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Document request not found or not authorized to update")
+
+        return {"message": "Status updated successfully"}
+
+    except PyJWTError as e:
+        raise HTTPException(status_code=401, detail="Could not validate credentials") from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@TrackDocumentsRouter.put("/auth/update_feedback")
+async def update_feedback(data: UpdateFeedbackModel, token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+    try:
+        if token.startswith('b\''):
+            token = token[2:-1]
+        payload = decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        account_id = payload.get("account_id")
+        print(f"Updating feedback for user {account_id}")
+
+        cursor = db[0].cursor()
+
+        query = """
+        UPDATE user_feedback
+        SET feedback_text = %s, feedback_rating = %s, feedback_date = %s
+        WHERE request_id = %s AND user_id = %s
+        """
+        feedback_date = datetime.now()
+        cursor.execute(query, (data.feedback_text, data.feedback_rating, feedback_date, data.request_id, account_id))
+        db[0].commit()
+        
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Document request not found or not authorized to update")
+
+        return {"message": "Feedback updated successfully"}
+
     except PyJWTError as e:
         raise HTTPException(status_code=401, detail="Could not validate credentials") from e
     except Exception as e:

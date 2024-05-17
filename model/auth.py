@@ -67,7 +67,10 @@ async def login(user: User, response: Response, db=Depends(get_db)):
             print("Cookie set successfully")
 
             if admin_role:
-                return {"message": "Logged in", "role": "admin"}
+                if admin_role[0] == "Super Admin":
+                    return {"message": "Logged in", "role": "super_admin"}
+                else:
+                    return {"message": "Logged in", "role": "admin"}
             elif student_role:
                 return {"message": "Logged in", "role": "student"}
             else:
