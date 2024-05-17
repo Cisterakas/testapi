@@ -6,6 +6,8 @@ from fastapi import FastAPI
 # from websocket import manager
 from model.trackdocuments import TrackDocumentsRouter
 from model.getdocuments import GetDocumentRequestsRouter
+from model.confirmation import ConfirmationRouter
+from model.history import HistoryDocumentsRouter
 # from model.user import UserRouter
 from model.students import StudentRouter
 from model.administrator import AdministratorRouter
@@ -39,9 +41,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(HistoryDocumentsRouter, prefix="/api")
 app.include_router(TrackDocumentsRouter, prefix="/api")
 app.include_router(GetDocumentRequestsRouter, prefix="/api")
+app.include_router(ConfirmationRouter, prefix="/api")
 # Include CRUD routes from modules
 app.include_router(AuthRouter, prefix="/api")
 app.include_router(AllUsersRouter, prefix="/api")
