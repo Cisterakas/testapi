@@ -8,8 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 import os
-# from dotenv import load_dotenv
-# load_dotenv()  # Load environment variables from .env file
+
 
 AuthRouter = APIRouter(tags=["Auth"])
 
@@ -28,6 +27,59 @@ class User(BaseModel):
 class AccountNotApprovedError(Exception):
     pass
 
+# @AuthRouter.post("/login")
+# async def login(user: User, response: Response, db=Depends(get_db)):
+#     query = "SELECT user_id, first_name FROM user WHERE email = %s AND password = %s"
+#     cursor = db[0].cursor()
+#     cursor.execute(query, (user.username, user.password))
+#     account = cursor.fetchone()
+
+#     if account:
+#         user_id = account[0]
+#         # Check account approval status (handle missing data)
+#         approval_query = "SELECT approved FROM account_approval WHERE user_id = %s"
+#         cursor.execute(approval_query, (user_id,))
+#         approval_status = cursor.fetchone()
+
+#         if approval_status and approval_status[0] == "TRUE":
+#             # Check if the user is an administrator
+#             admin_query = "SELECT role FROM administrator WHERE user_id = %s"
+#             cursor.execute(admin_query, (user_id,))
+#             admin_role = cursor.fetchone()
+
+#             # Check if the user is a student
+#             student_query = "SELECT user_id FROM student WHERE user_id = %s"
+#             cursor.execute(student_query, (user_id,))
+#             student_role = cursor.fetchone()
+
+#             # Proceed with token generation and login (approved account)
+#             token_data = {
+#                 "username": user.username,
+#                 "account_id": account[0],
+#                 "first_name": account[1],
+#                 "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1),
+#             }
+#             token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+#             response.set_cookie(
+#                 key="access_token", value=token, httponly=True, samesite="None", secure=True
+#             )
+#             print("Cookie set successfully")
+
+#             if admin_role:
+#                 if admin_role[0] == "Super Admin":
+#                     return {"message": "Logged in", "role": "super_admin"}
+#                 else:
+#                     return {"message": "Logged in", "role": "admin"}
+#             elif student_role:
+#                 return {"message": "Logged in", "role": "student"}
+#             else:
+#                 return {"message": "Logged in"}
+#         else:
+#             # Account not approved
+#             print(f"Account not approved for user {user.username}")  # Added for debugging
+#             raise HTTPException(status_code=403, detail="Account not approved")
+#     else:
+#         raise HTTPException(status_code=400, detail="Invalid credentials")
 @AuthRouter.post("/login")
 async def login(user: User, response: Response, db=Depends(get_db)):
     query = "SELECT user_id, first_name FROM user WHERE email = %s AND password = %s"
@@ -37,6 +89,7 @@ async def login(user: User, response: Response, db=Depends(get_db)):
 
     if account:
         user_id = account[0]
+
         # Check account approval status (handle missing data)
         approval_query = "SELECT approved FROM account_approval WHERE user_id = %s"
         cursor.execute(approval_query, (user_id,))
@@ -76,8 +129,7 @@ async def login(user: User, response: Response, db=Depends(get_db)):
             else:
                 return {"message": "Logged in"}
         else:
-            # Account not approved
-            print(f"Account not approved for user {user.username}")  # Added for debugging
+            print(f"Account not approved for user {user.username}")  # Debug statement
             raise HTTPException(status_code=403, detail="Account not approved")
     else:
         raise HTTPException(status_code=400, detail="Invalid credentials")
